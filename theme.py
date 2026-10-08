@@ -11,6 +11,7 @@ CARD_BORDER = "#D3D3D3"
 DIVIDER = "#CCCCCC"
 CARD_TINT = "rgba(0,33,81,0.05)"
 BLUE_WASH = "rgba(1,102,255,0.10)"
+BLUE_SOFT = "rgba(1,102,255,0.45)"
 
 FONT_HEADING = '"Inter", -apple-system, "Segoe UI", sans-serif'
 FONT_BODY = '"Lato", -apple-system, "Segoe UI", sans-serif'
@@ -86,7 +87,7 @@ def build_page_css() -> str:
     }}
     .kpi-row {{
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 20px;
         margin-top: -56px;
         margin-bottom: 32px;
@@ -171,6 +172,17 @@ def build_page_css() -> str:
         font-variant-numeric: tabular-nums;
         text-align: right;
     }}
+    .badge {{
+        display: inline-block;
+        background: {CARD_TINT};
+        color: {NAVY};
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }}
     .footer {{
         background: {NAVY};
         color: rgba(255,255,255,.7);
@@ -195,29 +207,38 @@ def build_page_css() -> str:
     """
 
 
-def chartjs_bar_config(fund_bar: list[dict]) -> dict:
-    labels = [row["fund_name"] for row in fund_bar]
-    data = [row["market_value"] for row in fund_bar]
+def chartjs_stacked_bar_config(per_fund: list[dict]) -> dict:
+    labels = [row["fund_name"] for row in per_fund]
+    direct = [row["direct_market_value"] for row in per_fund]
+    indirect = [row["indirect_market_value"] for row in per_fund]
     return {
         "type": "bar",
         "data": {
             "labels": labels,
             "datasets": [
                 {
-                    "label": "Market value",
-                    "data": data,
+                    "label": "Direct",
+                    "data": direct,
                     "backgroundColor": BLUE,
                     "borderRadius": 4,
                     "borderSkipped": False,
                     "maxBarThickness": 28,
-                }
+                },
+                {
+                    "label": "Indirect (look-through)",
+                    "data": indirect,
+                    "backgroundColor": BLUE_SOFT,
+                    "borderRadius": 4,
+                    "borderSkipped": False,
+                    "maxBarThickness": 28,
+                },
             ],
         },
         "options": {
             "indexAxis": "y",
             "maintainAspectRatio": False,
             "plugins": {
-                "legend": {"display": False},
+                "legend": {"display": True, "position": "bottom", "labels": {"font": {"family": "Lato"}}},
                 "tooltip": {
                     "backgroundColor": NAVY,
                     "titleFont": {"family": "Lato"},
@@ -226,11 +247,13 @@ def chartjs_bar_config(fund_bar: list[dict]) -> dict:
             },
             "scales": {
                 "x": {
+                    "stacked": True,
                     "title": {"display": True, "text": "Market value (USD)", "font": {"family": "Lato"}},
                     "grid": {"color": GRID_LINE},
                     "ticks": {"font": {"family": "Lato"}},
                 },
                 "y": {
+                    "stacked": True,
                     "grid": {"display": False},
                     "ticks": {"font": {"family": "Lato", "weight": 700}, "color": NAVY},
                 },
